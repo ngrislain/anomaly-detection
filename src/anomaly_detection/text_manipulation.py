@@ -1,37 +1,13 @@
 """Text standardization and positional insertion utilities."""
 
 import re
-import string
-
-# Latin-script letter blocks, accented forms included. 0xD7 (x) and 0xF7 (:)
-# sit inside the Latin-1 Supplement range but aren't letters, so that range is
-# split around them.
-_LATIN_LETTER_RANGES = (
-    (0x0041, 0x005A),  # A-Z
-    (0x0061, 0x007A),  # a-z
-    (0x00C0, 0x00D6),  # A-grave .. O-diaeresis
-    (0x00D8, 0x00F6),  # O-stroke .. o-diaeresis
-    (0x00F8, 0x00FF),  # o-stroke .. y-diaeresis
-    (0x0100, 0x017F),  # Latin Extended-A
-    (0x0180, 0x024F),  # Latin Extended-B
-)
-
-_ALLOWED_PUNCTUATION = ".,;:!?'\"()-"
-
-
-def _is_allowed_char(c: str) -> bool:
-    if c in string.digits or c.isspace() or c in _ALLOWED_PUNCTUATION:
-        return True
-    code = ord(c)
-    return any(lo <= code <= hi for lo, hi in _LATIN_LETTER_RANGES)
 
 
 def standardize_text(text: str) -> str:
-    """Keep only Latin-script letters (accents preserved), digits, basic
-    punctuation (`.,;:!?'"()-`), and whitespace; drop everything else and
-    collapse runs of horizontal whitespace.
+    """Keep only Latin-1 encodable characters (code points 0-255, so accented
+    Latin letters survive) and collapse runs of horizontal whitespace.
     """
-    filtered = "".join(c for c in text if _is_allowed_char(c))
+    filtered = "".join(c for c in text if ord(c) < 256)
     return re.sub(r"[ \t]+", " ", filtered)
 
 

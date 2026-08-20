@@ -97,9 +97,9 @@ def get_wikipedia_article(query: str, country_code: str) -> str:
             pick the Wikipedia language edition to search.
 
     Returns:
-        The article's plain text, standardized with `standardize_text` (Latin
-        letters with accents preserved, digits, basic punctuation, and
-        whitespace only), or an empty string if no article was found.
+        The article's plain text, standardized with `standardize_text`
+        (Latin-1 encodable characters only, so accents are preserved), or an
+        empty string if no article was found.
     """
     lang = _wiki_language(country_code)
     title = _search_top_title(lang, query)
