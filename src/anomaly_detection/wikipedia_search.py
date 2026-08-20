@@ -89,7 +89,7 @@ def _fetch_article_text(lang: str, title: str) -> str:
 
 @_memory.cache
 def get_wikipedia_article(query: str, country_code: str) -> str:
-    """Return the ASCII-only text of the top Wikipedia search result.
+    """Return the standardized text of the top Wikipedia search result.
 
     Args:
         query: search terms.
@@ -97,8 +97,9 @@ def get_wikipedia_article(query: str, country_code: str) -> str:
             pick the Wikipedia language edition to search.
 
     Returns:
-        The article's plain text with all non-ASCII characters stripped, or
-        an empty string if no article was found.
+        The article's plain text, standardized with `standardize_text` (Latin
+        letters with accents preserved, digits, basic punctuation, and
+        whitespace only), or an empty string if no article was found.
     """
     lang = _wiki_language(country_code)
     title = _search_top_title(lang, query)
