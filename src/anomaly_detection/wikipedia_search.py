@@ -4,11 +4,10 @@ Results are memoized to disk with joblib so repeated lookups for the same
 (query, country_code) pair never hit the network twice.
 """
 
-import re
-import unicodedata
-
 import requests
 from joblib import Memory
+
+from anomaly_detection.text_manipulation import standardize_text
 
 _CACHE_DIR = ".cache/wikipedia_search"
 _memory = Memory(location=_CACHE_DIR, verbose=0)
@@ -49,12 +48,6 @@ _COUNTRY_TO_WIKI_LANG = {
 def _wiki_language(country_code: str) -> str:
     code = country_code.strip().lower()
     return _COUNTRY_TO_WIKI_LANG.get(code, code)
-
-
-def _to_ascii(text: str) -> str:
-    normalized = unicodedata.normalize("NFKD", text)
-    ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
-    return re.sub(r"[ \t]+", " ", ascii_text)
 
 
 def _search_top_title(lang: str, query: str) -> str | None:
@@ -112,4 +105,4 @@ def get_wikipedia_article(query: str, country_code: str) -> str:
     if title is None:
         return ""
     text = _fetch_article_text(lang, title)
-    return _to_ascii(text)
+    return standardize_text(text)
