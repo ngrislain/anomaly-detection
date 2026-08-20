@@ -1,5 +1,5 @@
-"""Example: compare a trigram model and Qwen3.5-0.8B at spotting an
-out-of-place French sentence inserted into an English Wikipedia article.
+"""Example: compare character n-gram models and Qwen3.5-0.8B at spotting an
+out-of-place Basque sentence inserted into an English Wikipedia article.
 
 Run with:
     uv run python examples/anomaly_detection_example.py
@@ -9,13 +9,19 @@ import math
 import re
 
 from anomaly_detection.detector import detect_anomalies
-from anomaly_detection.models import QwenModel, TrigramModel
+from anomaly_detection.models import NgramModel, QwenModel
 from anomaly_detection.text_manipulation import insert_after_sentence
 from anomaly_detection.wikipedia_search import get_wikipedia_article
 
 TRAINING_QUERIES = ["Machine learning", "Statistics", "Computer science", "Mathematics"]
-FRENCH_SENTENCE = " Cette phrase est complètement hors sujet dans cet article."
-INSERT_AFTER_SENTENCE = 2
+NGRAM_ORDERS = (2, 3, 5)
+BASQUE_SENTENCE = (
+    " Gaur egun, kartveliar hizkuntzen eta euskararen arteko"
+    " ahaidetasun lotura ukatzen dute adituek."
+)
+# Sentence 1 ends at a genuine full stop; later indices fall inside the "e.g."
+# abbreviation, which the simple sentence regex treats as a boundary.
+INSERT_AFTER_SENTENCE = 1
 EXCERPT_CHARS = 900
 # The sentence regex splits abbreviations such as "e.g." into tiny fragments;
 # their means are dominated by one or two characters, so ignore them when
@@ -55,22 +61,23 @@ def main() -> None:
     corpus = [get_wikipedia_article(q, "us") for q in TRAINING_QUERIES]
 
     article = get_wikipedia_article("Artificial intelligence", "us")[:EXCERPT_CHARS]
-    text = insert_after_sentence(article, INSERT_AFTER_SENTENCE, FRENCH_SENTENCE)
+    text = insert_after_sentence(article, INSERT_AFTER_SENTENCE, BASQUE_SENTENCE)
 
     # Character span of the inserted sentence, used to check whether each model
     # actually flags it rather than something else.
-    start = text.index(FRENCH_SENTENCE)
-    anomaly = (start, start + len(FRENCH_SENTENCE))
-    print(f"Inserted at chars {anomaly[0]}-{anomaly[1]}: {FRENCH_SENTENCE.strip()!r}\n")
+    start = text.index(BASQUE_SENTENCE)
+    anomaly = (start, start + len(BASQUE_SENTENCE))
+    print(f"Inserted at chars {anomaly[0]}-{anomaly[1]}: {BASQUE_SENTENCE.strip()!r}\n")
 
-    print("Training trigram model...")
-    trigram = TrigramModel().fit(corpus)
-    report("trigram", detect_anomalies(trigram, text), text, anomaly)
+    for n in NGRAM_ORDERS:
+        print(f"Training {n}-gram model...")
+        ngram = NgramModel(n=n).fit(corpus)
+        report(f"{n}-gram", detect_anomalies(ngram, text), text, anomaly)
 
-    print("Loading Qwen3.5-0.8B (first run downloads ~1.8GB)...")
+    print("Loading Qwen (first run downloads ~1.8GB)...")
     qwen = QwenModel()
     print(f"running on device: {qwen.device}")
-    report("Qwen3.5-0.8B", detect_anomalies(qwen, text), text, anomaly)
+    report(qwen.model_name, detect_anomalies(qwen, text), text, anomaly)
 
 
 if __name__ == "__main__":

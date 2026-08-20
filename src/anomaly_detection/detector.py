@@ -7,7 +7,7 @@ def detect_anomalies(model: CharLogProbModel, text: str) -> list[tuple[str, floa
     """Score every character of `text` under `model`.
 
     Args:
-        model: anything implementing `char_log_probs`, e.g. `TrigramModel`
+        model: anything implementing `char_log_probs`, e.g. `NgramModel`
             or `QwenModel`.
         text: the text to score.
 

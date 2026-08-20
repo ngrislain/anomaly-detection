@@ -224,3 +224,6 @@ __marimo__/
 
 # Mac OS
 .DS_Store
+
+# Generated reports
+out/
